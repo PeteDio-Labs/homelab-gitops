@@ -6,9 +6,9 @@ metadata:
 spec:
   project: petedillo-stage
   source:
-    repoURL: https://github.com/petedillo/blog-gitops
+    repoURL: https://github.com/petedillo/homelab-gitops
     targetRevision: HEAD
-    path: homelab/infra/gitops/observability/overlays/stage
+    path: observability/overlays/stage
   destination:
     server: https://kubernetes.default.svc
     namespace: observability

@@ -6,9 +6,9 @@ metadata:
 spec:
   project: petedillo-dev
   source:
-    repoURL: https://github.com/petedillo/blog-gitops
+    repoURL: https://github.com/petedillo/homelab-gitops
     targetRevision: HEAD
-    path: homelab/infra/gitops/observability/overlays/dev
+    path: observability/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: observability
