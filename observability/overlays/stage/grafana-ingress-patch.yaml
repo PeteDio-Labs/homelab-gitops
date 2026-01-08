@@ -2,7 +2,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: grafana
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
+  tls:
+  - hosts:
+    - grafana-stage.toastedbytes.com
+    secretName: grafana-tls
   rules:
   - host: grafana-stage.toastedbytes.com
     http:
