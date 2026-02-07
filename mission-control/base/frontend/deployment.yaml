@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mission-control-frontend
+  namespace: mission-control
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mission-control-frontend
+  template:
+    metadata:
+      labels:
+        app: mission-control-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: docker.toastedbytes.com/mission-control-web:develop-latest
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5

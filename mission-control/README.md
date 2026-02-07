@@ -1,0 +1,254 @@
+# Mission Control - GitOps Manifests
+
+Kubernetes manifests for deploying Mission Control (backend + frontend + PostgreSQL) via ArgoCD.
+
+## Structure
+
+```
+mission-control/
+├── base/                      # Base Kubernetes manifests
+│   ├── namespace.yaml
+│   ├── backend/               # Node.js/Express API
+│   │   ├── deployment.yaml
+│   │   ├── service.yaml
+│   │   ├── configmap.yaml
+│   │   ├── secret.yaml
+│   │   └── kustomization.yaml
+│   ├── postgresql/            # PostgreSQL StatefulSet
+│   │   ├── statefulset.yaml
+│   │   ├── service.yaml
+│   │   ├── secret.yaml
+│   │   └── kustomization.yaml
+│   ├── frontend/              # Next.js Web UI
+│   │   ├── deployment.yaml
+│   │   ├── service.yaml
+│   │   ├── ingress.yaml
+│   │   └── kustomization.yaml
+│   └── kustomization.yaml
+├── overlays/
+│   ├── dev/                   # Development environment
+│   │   └── kustomization.yaml
+│   └── prod/                  # Production environment
+│       └── kustomization.yaml
+└── argocd/
+    ├── project.yaml           # ArgoCD project
+    └── applications/
+        ├── mission-control-dev.yaml
+        └── mission-control-prod.yaml
+```
+
+## Deployment
+
+### Prerequisites
+
+1. **MicroK8s cluster** with ArgoCD installed
+2. **Sealed Secrets** controller (for production secrets)
+3. **Docker registry** credentials configured (Nexus or docker.toastedbytes.com)
+4. **Backend built and pushed** to registry
+
+### Step 1: Update Secrets
+
+**For Dev (quick start)**:
+Edit secrets directly:
+```bash
+# Update PostgreSQL password
+kubectl edit secret postgresql-secret -n mission-control
+
+# Update backend secrets
+kubectl edit secret backend-secrets -n mission-control
+```
+
+**For Prod (recommended)**:
+Use sealed-secrets:
+```bash
+# Create unsealed secret
+kubectl create secret generic postgresql-secret \
+  --from-literal=password="$(openssl rand -base64 32)" \
+  --dry-run=client -o yaml > /tmp/postgres-secret.yaml
+
+# Seal it
+kubeseal -f /tmp/postgres-secret.yaml \
+  -w base/postgresql/sealed-secret.yaml
+
+# Clean up
+rm /tmp/postgres-secret.yaml
+
+# Update kustomization.yaml to use sealed-secret.yaml
+```
+
+### Step 2: Update ConfigMap
+
+Edit [`base/backend/configmap.yaml`](base/backend/configmap.yaml):
+
+```yaml
+# Update these values with your actual endpoints
+PROXMOX_HOST: "https://192.168.50.10:8006"
+PROMETHEUS_URL: "http://prometheus-server.observability-stack:9090"
+OLLAMA_BASE_URL: "http://ollama.dev:11434"
+ARGOCD_SERVER: "argocd-server.argocd:443"
+```
+
+### Step 3: Apply ArgoCD Project and Applications
+
+```bash
+# Apply ArgoCD project
+kubectl apply -f argocd/project.yaml
+
+# Deploy dev environment
+kubectl apply -f argocd/applications/mission-control-dev.yaml
+
+# (Optional) Deploy prod environment
+kubectl apply -f argocd/applications/mission-control-prod.yaml
+```
+
+### Step 4: Monitor Deployment
+
+```bash
+# Watch ArgoCD sync
+argocd app get mission-control-dev
+argocd app sync mission-control-dev
+
+# Watch pods
+kubectl get pods -n mission-control -w
+
+# Check logs
+kubectl logs -n mission-control -l app=mission-control-backend -f
+```
+
+### Step 5: Access Mission Control
+
+**Via Ingress** (if DNS configured):
+```
+http://mission-control.homelab.local
+```
+
+**Via Port Forward** (for testing):
+```bash
+# Frontend
+kubectl port-forward -n mission-control svc/mission-control-frontend 8080:80
+
+# Backend
+kubectl port-forward -n mission-control svc/mission-control-backend 3000:3000
+
+# Access at http://localhost:8080
+```
+
+## Environments
+
+### Dev
+
+- **Image tags**: `develop-latest`
+- **Replicas**: 1 backend, 1 frontend
+- **Auto-sync**: Enabled
+- **Log level**: debug
+- **Node ENV**: development
+
+### Prod
+
+- **Image tags**: `main-latest`
+- **Replicas**: 2 backend, 2 frontend
+- **Auto-sync**: Manual (self-heal disabled)
+- **Log level**: info
+- **Node ENV**: production
+- **Resources**: Higher CPU/memory limits
+
+## Secrets Management
+
+### Required Secrets
+
+**`postgresql-secret`**:
+- `password`: PostgreSQL database password
+
+**`backend-secrets`**:
+- `PROXMOX_API_TOKEN`: Proxmox API token (format: `user@realm!tokenid=uuid`)
+- `GEMINI_API_KEY`: Google Gemini API key
+- `API_AUTH_TOKEN`: Backend auth token (for web/macOS app)
+- `ARGOCD_AUTH_TOKEN`: (Optional) ArgoCD API token
+
+### Generating Secrets
+
+```bash
+# PostgreSQL password
+openssl rand -base64 32
+
+# API auth token
+openssl rand -hex 32
+
+# Get Gemini API key from:
+# https://makersuite.google.com/app/apikey
+
+# Get Proxmox token from:
+# Proxmox UI → Datacenter → Permissions → API Tokens
+```
+
+## Troubleshooting
+
+### Pods stuck in `Pending`
+
+```bash
+kubectl describe pod <pod-name> -n mission-control
+# Check events for storage/resource issues
+```
+
+### Backend can't connect to PostgreSQL
+
+```bash
+# Verify PostgreSQL is running
+kubectl get pods -n mission-control -l app=postgresql
+
+# Check logs
+kubectl logs -n mission-control postgresql-0
+
+# Test connection from backend pod
+kubectl exec -it -n mission-control <backend-pod> -- sh
+nc -zv postgresql 5432
+```
+
+### Image pull errors
+
+```bash
+# Verify image exists in registry
+curl https://docker.toastedbytes.com/v2/mission-control-backend/tags/list
+
+# Check imagePullSecret
+kubectl get secret nexus-registry -n mission-control
+```
+
+### ArgoCD sync fails
+
+```bash
+# Check ArgoCD app status
+argocd app get mission-control-dev
+
+# View sync errors
+argocd app sync mission-control-dev --dry-run
+
+# Force sync
+argocd app sync mission-control-dev --force
+```
+
+## Updating Image Tags
+
+ArgoCD Image Updater will automatically update tags when new images are pushed (if configured).
+
+**Manual update**:
+```bash
+# Edit overlay kustomization
+cd overlays/dev
+kustomize edit set image docker.toastedbytes.com/mission-control-backend:v1.2.3
+
+# Commit and push
+git add kustomization.yaml
+git commit -m "Update backend to v1.2.3"
+git push
+
+# ArgoCD will auto-sync
+```
+
+## References
+
+- [Mission Control Master Plan](../../mission%20control/MISSION_CONTROL_MASTER_PLAN.md)
+- [Backend Repo](https://github.com/petedillo/mission-control-backend)
+- [Frontend Repo](https://github.com/petedillo/mission-control-web)
+- [ArgoCD Docs](https://argo-cd.readthedocs.io/)
+- [Kustomize Docs](https://kustomize.io/)

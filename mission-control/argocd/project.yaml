@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: mission-control
+  namespace: argocd
+spec:
+  description: Mission Control - LLM-powered homelab management
+
+  sourceRepos:
+  - 'https://github.com/petedillo/PeteDio-Labs.git'
+
+  destinations:
+  - namespace: mission-control
+    server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+  - group: ''
+    kind: Namespace
+
+  namespaceResourceWhitelist:
+  - group: ''
+    kind: '*'
+  - group: 'apps'
+    kind: '*'
+  - group: 'networking.k8s.io'
+    kind: '*'
+  - group: 'batch'
+    kind: '*'

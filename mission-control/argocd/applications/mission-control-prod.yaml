@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mission-control-prod
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: mission-control
+
+  source:
+    repoURL: https://github.com/petedillo/PeteDio-Labs.git
+    targetRevision: main
+    path: gitops/gitops/mission-control/overlays/prod
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mission-control
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false  # Manual approval for prod
+      allowEmpty: false
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  revisionHistoryLimit: 10

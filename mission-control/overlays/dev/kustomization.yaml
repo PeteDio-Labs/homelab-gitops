@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: mission-control
+
+resources:
+- ../../base
+
+images:
+- name: docker.toastedbytes.com/mission-control-backend
+  newTag: develop-latest
+- name: docker.toastedbytes.com/mission-control-web
+  newTag: develop-latest
+
+patches:
+- patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/env/0/value
+      value: "development"
+  target:
+    kind: Deployment
+    name: mission-control-backend
+
+- patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/env/2/value
+      value: "debug"
+  target:
+    kind: Deployment
+    name: mission-control-backend
+
+configMapGenerator:
+- name: backend-config
+  behavior: merge
+  literals:
+  - LOG_LEVEL=debug
+
+labels:
+- pairs:
+    environment: dev
