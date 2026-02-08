@@ -26,8 +26,14 @@ spec:
           value: "production"
         - name: PORT
           value: "3000"
-        - name: DATABASE_URL
-          value: "postgresql://mission_control:$(POSTGRES_PASSWORD)@postgresql:5432/mission_control"
+        - name: POSTGRES_HOST
+          value: "postgresql"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: "mission_control"
+        - name: POSTGRES_USER
+          value: "mission_control"
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
