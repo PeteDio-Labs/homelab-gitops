@@ -30,11 +30,16 @@ patches:
     kind: Deployment
     name: mission-control-backend
 
-configMapGenerator:
-- name: backend-config
-  behavior: merge
-  literals:
-  - LOG_LEVEL=debug
+- patch: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: backend-config
+    data:
+      LOG_LEVEL: "debug"
+  target:
+    kind: ConfigMap
+    name: backend-config
 
 labels:
 - pairs:

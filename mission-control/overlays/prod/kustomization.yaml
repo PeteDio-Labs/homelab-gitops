@@ -44,11 +44,16 @@ patches:
     kind: StatefulSet
     name: postgresql
 
-configMapGenerator:
-- name: backend-config
-  behavior: merge
-  literals:
-  - LOG_LEVEL=info
+- patch: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: backend-config
+    data:
+      LOG_LEVEL: "info"
+  target:
+    kind: ConfigMap
+    name: backend-config
 
 labels:
 - pairs:
