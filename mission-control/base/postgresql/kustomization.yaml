@@ -4,4 +4,4 @@ kind: Kustomization
 resources:
 - statefulset.yaml
 - service.yaml
-- secret.yaml
+# secret.yaml is replaced by sealed-secrets in overlays

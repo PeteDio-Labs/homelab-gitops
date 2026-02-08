@@ -6,7 +6,5 @@ kind: Kustomization
 # These are encrypted and safe to commit to Git
 
 resources:
-  - proxmox-token.yaml
-  - gemini-api-key.yaml
-  - auth-token.yaml
-  - postgres-password.yaml
+  - backend-secrets.yaml
+  - postgresql-secret.yaml

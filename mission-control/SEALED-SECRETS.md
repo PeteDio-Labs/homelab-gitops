@@ -31,31 +31,7 @@ The script will:
 
 **⚠️ CRITICAL**: Save the displayed credentials in your password manager! You won't be able to recover them.
 
-### 2. Update Kustomization Files
-
-After generating secrets, update the overlay kustomization to reference them:
-
-#### Dev (`overlays/dev/kustomization.yaml`)
-```yaml
-resources:
-- ../../base
-- sealed-secrets/proxmox-token.yaml
-- sealed-secrets/gemini-api-key.yaml
-- sealed-secrets/auth-token.yaml
-- sealed-secrets/postgres-password.yaml
-```
-
-#### Prod (`overlays/prod/kustomization.yaml`)
-```yaml
-resources:
-- ../../base
-- sealed-secrets/proxmox-token.yaml
-- sealed-secrets/gemini-api-key.yaml
-- sealed-secrets/auth-token.yaml
-- sealed-secrets/postgres-password.yaml
-```
-
-### 3. Commit and Push
+### 2. Commit and Push
 
 ```bash
 git add overlays/
@@ -71,14 +47,10 @@ ArgoCD will automatically:
 
 ## Secrets Structure
 
-The generated secrets are split into separate sealed secrets for better granularity:
+The generated secrets are organized into two sealed secrets that match the names expected by the Kubernetes manifests:
 
-1. **proxmox-token.yaml** - Contains `PROXMOX_API_TOKEN`
-2. **gemini-api-key.yaml** - Contains `GEMINI_API_KEY`
-3. **auth-token.yaml** - Contains `API_AUTH_TOKEN`
-4. **postgres-password.yaml** - Contains `POSTGRES_PASSWORD`
-
-All secrets are mounted into the backend deployment as environment variables.
+1. **backend-secrets.yaml** - SealedSecret named `backend-secrets` containing: `PROXMOX_API_TOKEN`, `GEMINI_API_KEY`, `API_AUTH_TOKEN`, `POSTGRES_PASSWORD`. Consumed by the backend deployment via `envFrom: secretRef`.
+2. **postgresql-secret.yaml** - SealedSecret named `postgresql-secret` containing: `password`. Consumed by both the backend deployment and PostgreSQL statefulset via `secretKeyRef`.
 
 ## Getting Your Gemini API Key
 
@@ -99,7 +71,8 @@ kubectl get sealedsecrets -n mission-control
 kubectl get secrets -n mission-control
 
 # View secret keys (not values)
-kubectl describe secret backend-secrets-proxmox -n mission-control
+kubectl describe secret backend-secrets -n mission-control
+kubectl describe secret postgresql-secret -n mission-control
 ```
 
 ## Updating Secrets
@@ -116,7 +89,7 @@ To update a secret:
 - ✅ Sealed secrets are encrypted and **safe to commit** to Git
 - ✅ Only the Sealed Secrets controller in your cluster can decrypt them
 - ❌ **Never commit** plain `secret.yaml` files
-- ❌ The `base/backend/secret.yaml` is git-ignored and serves as a template only
+- ❌ The `base/backend/secret.yaml` and `base/postgresql/secret.yaml` are git-ignored and serve as templates only
 - 🔒 Store plain credentials in a password manager (1Password, Bitwarden, etc.)
 
 ## Troubleshooting
