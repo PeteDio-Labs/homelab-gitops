@@ -7,13 +7,13 @@ data:
   # Kubernetes (in-cluster config auto-detected)
   K8S_IN_CLUSTER: "true"
 
-  # Proxmox (TODO: Update with your Proxmox host)
-  PROXMOX_HOST: "https://proxmox.homelab.local:8006"
+  # Proxmox
+  PROXMOX_HOST: "https://192.168.50.10:8006"
 
-  # Prometheus (TODO: Update with your Prometheus endpoint)
+  # Prometheus
   PROMETHEUS_URL: "http://prometheus-server.observability-stack:9090"
 
-  # Ollama (TODO: Update with your Ollama endpoint)
+  # Ollama
   OLLAMA_BASE_URL: "http://ollama.dev:11434"
   OLLAMA_MODEL: "mistral"
 
