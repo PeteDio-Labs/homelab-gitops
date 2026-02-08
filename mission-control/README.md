@@ -12,12 +12,12 @@ mission-control/
 │   │   ├── deployment.yaml
 │   │   ├── service.yaml
 │   │   ├── configmap.yaml
-│   │   ├── secret.yaml
+│   │   ├── secret.yaml        # Template only (git-ignored)
 │   │   └── kustomization.yaml
 │   ├── postgresql/            # PostgreSQL StatefulSet
 │   │   ├── statefulset.yaml
 │   │   ├── service.yaml
-│   │   ├── secret.yaml
+│   │   ├── secret.yaml        # Template only (git-ignored)
 │   │   └── kustomization.yaml
 │   ├── frontend/              # Next.js Web UI
 │   │   ├── deployment.yaml
@@ -26,15 +26,24 @@ mission-control/
 │   │   └── kustomization.yaml
 │   └── kustomization.yaml
 ├── overlays/
-│   ├── dev/                   # Development environment
-│   │   └── kustomization.yaml
-│   └── prod/                  # Production environment
-│       └── kustomization.yaml
-└── argocd/
-    ├── project.yaml           # ArgoCD project
-    └── applications/
-        ├── mission-control-dev.yaml
-        └── mission-control-prod.yaml
+│   ├── dev/
+│   │   ├── kustomization.yaml
+│   │   └── sealed-secrets/    # Encrypted secrets (safe to commit)
+│   │       ├── backend-secrets.yaml
+│   │       ├── postgresql-secret.yaml
+│   │       └── kustomization.yaml
+│   └── prod/
+│       ├── kustomization.yaml
+│       └── sealed-secrets/
+├── scripts/
+│   └── generate-sealed-secrets.sh  # Generates and seals all secrets
+├── argocd/
+│   ├── project.yaml
+│   └── applications/
+│       ├── mission-control-dev.yaml
+│       └── mission-control-prod.yaml
+├── SEALED-SECRETS.md
+└── README.md
 ```
 
 ## Deployment
@@ -46,35 +55,21 @@ mission-control/
 3. **Docker registry** credentials configured (Nexus or docker.toastedbytes.com)
 4. **Backend built and pushed** to registry
 
-### Step 1: Update Secrets
+### Step 1: Generate Sealed Secrets
 
-**For Dev (quick start)**:
-Edit secrets directly:
 ```bash
-# Update PostgreSQL password
-kubectl edit secret postgresql-secret -n mission-control
+cd /path/to/gitops/gitops/mission-control
 
-# Update backend secrets
-kubectl edit secret backend-secrets -n mission-control
+# For dev
+./scripts/generate-sealed-secrets.sh dev
+
+# For prod
+./scripts/generate-sealed-secrets.sh prod
 ```
 
-**For Prod (recommended)**:
-Use sealed-secrets:
-```bash
-# Create unsealed secret
-kubectl create secret generic postgresql-secret \
-  --from-literal=password="$(openssl rand -base64 32)" \
-  --dry-run=client -o yaml > /tmp/postgres-secret.yaml
+The script generates random credentials and prompts for your Gemini API key, then encrypts everything with `kubeseal`. Save the displayed plaintext credentials in your password manager.
 
-# Seal it
-kubeseal -f /tmp/postgres-secret.yaml \
-  -w base/postgresql/sealed-secret.yaml
-
-# Clean up
-rm /tmp/postgres-secret.yaml
-
-# Update kustomization.yaml to use sealed-secret.yaml
-```
+See [SEALED-SECRETS.md](SEALED-SECRETS.md) for full details.
 
 ### Step 2: Update ConfigMap
 
@@ -154,32 +149,29 @@ kubectl port-forward -n mission-control svc/mission-control-backend 3000:3000
 
 ## Secrets Management
 
+All secrets are managed via **Sealed Secrets**. Plaintext `secret.yaml` files in `base/` are git-ignored templates only.
+
 ### Required Secrets
 
-**`postgresql-secret`**:
-- `password`: PostgreSQL database password
-
-**`backend-secrets`**:
-- `PROXMOX_API_TOKEN`: Proxmox API token (format: `user@realm!tokenid=uuid`)
+**`backend-secrets`** (SealedSecret → consumed via `envFrom: secretRef`):
+- `PROXMOX_API_TOKEN`: Proxmox API token
 - `GEMINI_API_KEY`: Google Gemini API key
 - `API_AUTH_TOKEN`: Backend auth token (for web/macOS app)
-- `ARGOCD_AUTH_TOKEN`: (Optional) ArgoCD API token
+- `POSTGRES_PASSWORD`: PostgreSQL database password
 
-### Generating Secrets
+**`postgresql-secret`** (SealedSecret → consumed via `secretKeyRef`):
+- `password`: PostgreSQL database password (same value as above)
+
+### Generating / Rotating Secrets
 
 ```bash
-# PostgreSQL password
-openssl rand -base64 32
-
-# API auth token
-openssl rand -hex 32
-
-# Get Gemini API key from:
-# https://makersuite.google.com/app/apikey
-
-# Get Proxmox token from:
-# Proxmox UI → Datacenter → Permissions → API Tokens
+./scripts/generate-sealed-secrets.sh dev   # or prod
+git add overlays/
+git commit -m "chore: rotate sealed secrets"
+git push
 ```
+
+See [SEALED-SECRETS.md](SEALED-SECRETS.md) for full guide.
 
 ## Troubleshooting
 
