@@ -9,9 +9,9 @@ spec:
   project: mission-control
 
   source:
-    repoURL: https://github.com/petedillo/homelab-gitops.git
+    repoURL: https://github.com/petedillo/mission-control-gitops.git
     targetRevision: main
-    path: mission-control/overlays/prod
+    path: kubernetes/overlays/prod
 
   destination:
     server: https://kubernetes.default.svc

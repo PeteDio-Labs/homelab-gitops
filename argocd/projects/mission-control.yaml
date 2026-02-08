@@ -7,7 +7,7 @@ spec:
   description: Mission Control - LLM-powered homelab management
 
   sourceRepos:
-  - 'https://github.com/petedillo/homelab-gitops.git'
+  - 'https://github.com/petedillo/mission-control-gitops.git'
 
   destinations:
   - namespace: mission-control

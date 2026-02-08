@@ -1,7 +1,0 @@
-# Ignore raw secrets - use sealed-secrets instead
-base/backend/secret.yaml
-base/postgresql/secret.yaml
-
-# Ignore temporary files
-*.tmp
-*.bak
