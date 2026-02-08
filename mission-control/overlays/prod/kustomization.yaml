@@ -5,6 +5,7 @@ namespace: mission-control
 
 resources:
 - ../../base
+- sealed-secrets
 
 images:
 - name: docker.toastedbytes.com/mission-control-backend

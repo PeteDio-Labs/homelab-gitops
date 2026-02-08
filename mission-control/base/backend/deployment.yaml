@@ -13,6 +13,8 @@ spec:
       labels:
         app: mission-control-backend
     spec:
+      imagePullSecrets:
+      - name: nexus-registry
       containers:
       - name: backend
         image: docker.toastedbytes.com/mission-control-backend:develop-latest

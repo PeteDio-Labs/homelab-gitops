@@ -86,6 +86,26 @@ kubectl create secret generic postgresql-secret \
 echo -e "${GREEN}OK${NC} postgresql-secret sealed"
 
 #############################################
+# Create SealedSecret 3: nexus-registry
+# (Docker registry credentials for image pulls)
+#############################################
+
+echo "Sealing nexus-registry..."
+echo -e "${YELLOW}Enter Nexus registry password:${NC}"
+read -s NEXUS_PASSWORD
+echo ""
+
+kubectl create secret docker-registry nexus-registry \
+  --docker-server=docker.toastedbytes.com \
+  --docker-username=admin \
+  --docker-password="${NEXUS_PASSWORD}" \
+  --docker-email=admin@toastedbytes.com \
+  --namespace="${NAMESPACE}" \
+  --dry-run=client \
+  -o yaml | kubeseal -o yaml > "${OVERLAY_PATH}/nexus-registry.yaml"
+echo -e "${GREEN}OK${NC} nexus-registry sealed"
+
+#############################################
 # Generate kustomization.yaml
 #############################################
 
@@ -100,6 +120,7 @@ kind: Kustomization
 resources:
   - backend-secrets.yaml
   - postgresql-secret.yaml
+  - nexus-registry.yaml
 EOF
 echo -e "${GREEN}OK${NC} kustomization.yaml generated"
 
@@ -113,6 +134,7 @@ echo ""
 echo "Generated Files:"
 echo "  - ${OVERLAY_PATH}/backend-secrets.yaml"
 echo "  - ${OVERLAY_PATH}/postgresql-secret.yaml"
+echo "  - ${OVERLAY_PATH}/nexus-registry.yaml"
 echo "  - ${OVERLAY_PATH}/kustomization.yaml"
 echo ""
 echo "IMPORTANT - Save these credentials securely:"
@@ -121,6 +143,7 @@ echo "PROXMOX_API_TOKEN: ${PROXMOX_TOKEN}"
 echo "GEMINI_API_KEY: ${GEMINI_KEY}"
 echo "API_AUTH_TOKEN: ${API_TOKEN}"
 echo "POSTGRES_PASSWORD: ${POSTGRES_PASS}"
+echo "NEXUS_PASSWORD: ${NEXUS_PASSWORD}"
 echo "-------------------------------------------------------"
 echo ""
 echo "These sealed secrets are encrypted and safe to commit to Git"

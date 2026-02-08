@@ -1,0 +1,14 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: nexus-registry
+  namespace: mission-control
+spec:
+  encryptedData:
+    .dockerconfigjson: AgB2wYRmzjJuH5p/QZvvYA0bq8UXXrsenz13T5CTuWSaM9BiY/5ecp3jjUqEbw4ES7M8f6dv6Y/Vdr1FM5ifuWfi7da88Is2njIEwSbX3Hk6qrgY9Y/17t3sLKwWAPVC8JuLg1P5Qp5H1RENKWIMfar3Df4SeL6yGGnIjcJuRDWiSyhC+Z4dKidT0jMiUlHrto9FP49Mz0AgT6KcV37Y/vFJ2kmhLM06pw0rdyJDrDPBjUnCKxKNoE3g4cZukUZFYdcldtTMYPdmn9lcf2nTtKnaGW9yikZ3fkaJX3tDOiK6FPIQK6vRadPDq5ZsluvwYztZwMVl7J5EFcpNocyHqO4PRMhbwvYOW7Q/DzSuEucN9jXMolu6kHY2eSydBx8ZFfElaSVCAqML2wqH+fXheKA5ckTa5HKPBY8Zn6lp812vWnj2xr9pONoaDSyghT7alKM+sTVW5/QNFUIVsibKKErMEJla0hR+uugIgR2H/oS19R8OuutW5FFFpm9aaTlEJXR2xqVsGSfL/ieFieJuVKRh86CMww0507ujd/TqR+8Ls0ql2jR3As2lyZAJtFhFDJNDGRJEBSInfbBxLhj/sj7ldDBPAHrORZT4siZxauFhlcYxJF76SEunI9VFX8PoMnnyZOkYLz8L92NM94vopOFGmx4Rpmsx5P6t5+Zb4mm/uSmN8oWn4fyUEm58HWW7lYHg7PrG/0JVknWYy+YDrZTVtGEto4LVKTIk+jQhP+02eEVTo/Mxs+4KnfoWXOk+fd65hvKVwF87T48qAv9eH4q4FiRSQPfxCRz2ZgtQcu/1S1qYF2T9JimAIMlRnvGxuq/54J764T8N3iuPkBRRi6AoZ6BJ67a0V8mq3JRm0g==
+  template:
+    metadata:
+      name: nexus-registry
+      namespace: mission-control
+    type: kubernetes.io/dockerconfigjson
