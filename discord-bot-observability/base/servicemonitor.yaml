@@ -3,6 +3,8 @@ kind: ServiceMonitor
 metadata:
   name: discord-bot-monitor
   namespace: observability
+  labels:
+    release: kube-prom-stack
 spec:
   selector:
     matchLabels:

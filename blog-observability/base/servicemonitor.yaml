@@ -3,6 +3,8 @@ kind: ServiceMonitor
 metadata:
   name: blog-api-monitor
   namespace: observability
+  labels:
+    release: kube-prom-stack
 spec:
   selector:
     matchLabels:
