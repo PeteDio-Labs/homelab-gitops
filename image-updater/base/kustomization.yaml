@@ -10,4 +10,4 @@ helmCharts:
     version: 0.11.0
     releaseName: argocd-image-updater
     namespace: argocd
-    valuesFile: ../values/values.yaml
+    valuesFile: values.yaml
