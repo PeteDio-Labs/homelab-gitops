@@ -20,7 +20,7 @@ spec:
     path: kubernetes/overlays/prod
   destination:
     server: https://kubernetes.default.svc
-    namespace: pete-bot
+    namespace: mission-control
   syncPolicy:
     automated:
       prune: true
