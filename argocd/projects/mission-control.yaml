@@ -12,6 +12,8 @@ spec:
   destinations:
   - namespace: mission-control
     server: https://kubernetes.default.svc
+  - namespace: mission-control-prod
+    server: https://kubernetes.default.svc
   - namespace: observability
     server: https://kubernetes.default.svc
 
