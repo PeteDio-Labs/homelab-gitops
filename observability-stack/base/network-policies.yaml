@@ -71,6 +71,26 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  name: allow-kube-state-metrics-egress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.152.183.0/24  # ClusterIPs (K8s API server)
+        - ipBlock:
+            cidr: 192.168.50.0/24  # LAN (MicroK8s node API endpoint)
+      ports:
+        - port: 443
+        - port: 16443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
   name: allow-ingress-to-grafana
 spec:
   podSelector:
