@@ -48,6 +48,16 @@ spec:
         - port: 3000
         - port: 3002
         - port: 3003
+        - port: 9100
+    - to:
+        - ipBlock:
+            cidr: 10.152.183.0/24  # ClusterIPs (K8s API server for service discovery)
+        - ipBlock:
+            cidr: 192.168.50.0/24  # LAN (MicroK8s node API endpoint + kubelet)
+      ports:
+        - port: 443
+        - port: 16443
+        - port: 10250  # kubelet metrics
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -87,6 +97,42 @@ spec:
       ports:
         - port: 443
         - port: 16443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-operator-egress
+spec:
+  podSelector:
+    matchLabels:
+      app: kube-prometheus-stack-operator
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.152.183.0/24  # ClusterIPs (K8s API server)
+        - ipBlock:
+            cidr: 192.168.50.0/24  # LAN (MicroK8s node API endpoint)
+      ports:
+        - port: 443
+        - port: 16443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scrape-kube-state-metrics
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - port: 8080
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
