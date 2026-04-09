@@ -1,3 +1,0 @@
-# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
-# This file is deprecated - namespace filtering moved to base prometheus-rules.yaml
-# Delete this file if no longer needed
